@@ -41,7 +41,7 @@ jcef-d3de827+cef-146.0.10+g8219561+chromium-146.0.7680.179
 ```
 
 Every runtime package includes `build_meta.json` with
-`dawn_codec_revision=native-codecs.1`, and the asset filename also includes the
+`dawn_codec_revision=native-codecs.2`, and the asset filename also includes the
 codec revision. Keeping the upstream `release_tag` is required because the
 upstream `jcefmaven:146.0.10` Java API verifies it before initializing an
 already-installed native runtime. Dawn also writes its own `install.lock` and

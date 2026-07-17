@@ -189,7 +189,7 @@ if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
     endif()
     file(STRINGS "${CEF_ROOT}/dawn-codec-build.properties" DAWN_CODEC_BUILD)
     foreach(REQUIRED_MARKER
-        "codec.revision=native-codecs.1"
+        "codec.revision=native-codecs.2"
         "cef.source.commit=82195616d8405e6081a0d90924707b82aa9e4141"
         "chromium.version=146.0.7680.179"
         "ffmpeg.branding=Chromium")
