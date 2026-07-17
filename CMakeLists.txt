@@ -170,7 +170,7 @@ option(DAWN_NATIVE_CODECS
 if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
   if(DAWN_NATIVE_CODECS)
     set(CEF_ROOT_EXPECTED_VERSION
-        "146.0.12+g316d9cf+chromium-146.0.7680.179")
+        "146.0.15+g566c566+chromium-146.0.7680.179")
   else()
     set(CEF_ROOT_EXPECTED_VERSION "${CEF_VERSION}")
   endif()
@@ -195,7 +195,7 @@ if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
     endif()
     file(STRINGS "${CEF_ROOT}/dawn-codec-build.properties" DAWN_CODEC_BUILD)
     foreach(REQUIRED_MARKER
-        "codec.revision=native-codecs.2"
+        "codec.revision=native-codecs.3"
         "cef.source.commit=82195616d8405e6081a0d90924707b82aa9e4141"
         "chromium.version=146.0.7680.179"
         "ffmpeg.branding=Chromium")

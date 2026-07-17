@@ -13,8 +13,8 @@ Set-StrictMode -Version Latest
 
 $jcefCommit = "d3de827"
 $upstreamCefVersion = "146.0.10+g8219561+chromium-146.0.7680.179"
-$nativeCefVersion = "146.0.12+g316d9cf+chromium-146.0.7680.179"
-$codecRevision = "native-codecs.2"
+$nativeCefVersion = "146.0.15+g566c566+chromium-146.0.7680.179"
+$codecRevision = "native-codecs.3"
 $releaseTag = "jcef-d3de827+cef-$upstreamCefVersion"
 $platform = "windows-amd64"
 $basename = "jcef-natives-$platform-jcef-$jcefCommit+cef-$nativeCefVersion+$codecRevision"

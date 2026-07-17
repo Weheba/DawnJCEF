@@ -35,7 +35,7 @@ To verify the Windows packaging contract without compiling JCEF, run:
 The script uses the tracked fixture under
 `dawn/test-fixtures/windows-packaging/cef-root`, generates placeholder runtime
 files, and verifies that the packaged artifact name and `build_meta.json`
-identify `native-codecs.2`.
+identify `native-codecs.3`.
 
 ## macOS arm64
 
@@ -50,7 +50,7 @@ The macOS build requires the full Xcode 26 toolchain selected with
 
 The Java classes remain the upstream `146.0.10` classes. Dawn changes only the
 native archive coordinates and pins its SHA-256. The custom native engine is
-`146.0.12+g316d9cf+chromium-146.0.7680.179`, while the package keeps the
+`146.0.15+g566c566+chromium-146.0.7680.179`, while the package keeps the
 upstream JCEF compatibility tag:
 
 ```text
@@ -58,7 +58,7 @@ jcef-d3de827+cef-146.0.10+g8219561+chromium-146.0.7680.179
 ```
 
 Every runtime package includes `build_meta.json` with
-`dawn_codec_revision=native-codecs.2`, and the asset filename also includes the
+`dawn_codec_revision=native-codecs.3`, and the asset filename also includes the
 codec revision. Keeping the upstream `release_tag` is required because the
 upstream `jcefmaven:146.0.10` Java API verifies it before initializing an
 already-installed native runtime. Dawn also writes its own `install.lock` and

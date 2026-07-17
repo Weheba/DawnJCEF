@@ -15,10 +15,10 @@ $cefRoot = Join-Path $resolvedWorkspace "cef-root"
 $nativeDirectory = Join-Path $resolvedWorkspace "native"
 $outputDirectory = Join-Path $resolvedWorkspace "artifacts"
 $extractDirectory = Join-Path $resolvedWorkspace "extracted"
-$expectedCodecRevision = "native-codecs.2"
+$expectedCodecRevision = "native-codecs.3"
 $expectedArtifactSuffix = "+$expectedCodecRevision"
 $expectedReleaseTag = "jcef-d3de827+cef-146.0.10+g8219561+chromium-146.0.7680.179"
-$expectedCefVersion = "146.0.12+g316d9cf+chromium-146.0.7680.179"
+$expectedCefVersion = "146.0.15+g566c566+chromium-146.0.7680.179"
 $requiredFiles = @(
     "chrome_100_percent.pak",
     "chrome_200_percent.pak",
