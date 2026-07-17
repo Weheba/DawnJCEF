@@ -162,9 +162,52 @@ endif()
 # Add this project's cmake/ directory to the module path.
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# Download and extract the CEF binary distribution (executes DownloadCEF.cmake).
-include(DownloadCEF)
-DownloadCEF("${CEF_PLATFORM}" "${CEF_VERSION}" "${CMAKE_SOURCE_DIR}/third_party/cef")
+# Use an explicitly supplied CEF binary distribution when provided. Dawn uses
+# this path to build JCEF against its patched CEF binaries without publishing
+# them to the upstream Spotify distribution bucket first.
+option(DAWN_NATIVE_CODECS
+       "Require Dawn's native-codec CEF distribution marker" OFF)
+if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
+  get_filename_component(CEF_ROOT "${CEF_ROOT}" ABSOLUTE)
+  if(NOT EXISTS "${CEF_ROOT}/cmake/FindCEF.cmake")
+    message(FATAL_ERROR "CEF_ROOT is not a CEF binary distribution: ${CEF_ROOT}")
+  endif()
+  if(NOT EXISTS "${CEF_ROOT}/include/cef_version.h")
+    message(FATAL_ERROR "CEF_ROOT does not contain include/cef_version.h: ${CEF_ROOT}")
+  endif()
+  file(STRINGS "${CEF_ROOT}/include/cef_version.h" CEF_VERSION_LINE
+       REGEX "^#define CEF_VERSION ")
+  if(NOT "${CEF_VERSION_LINE}" STREQUAL
+     "#define CEF_VERSION \"146.0.10+g8219561+chromium-146.0.7680.179\"")
+    message(FATAL_ERROR "CEF_ROOT has an unexpected CEF version: ${CEF_VERSION_LINE}")
+  endif()
+
+  if(DAWN_NATIVE_CODECS)
+    if(NOT EXISTS "${CEF_ROOT}/dawn-codec-build.properties")
+      message(FATAL_ERROR
+              "CEF_ROOT is not a Dawn native-codec distribution: ${CEF_ROOT}")
+    endif()
+    file(STRINGS "${CEF_ROOT}/dawn-codec-build.properties" DAWN_CODEC_BUILD)
+    foreach(REQUIRED_MARKER
+        "codec.revision=native-codecs.1"
+        "cef.source.commit=82195616d8405e6081a0d90924707b82aa9e4141"
+        "chromium.version=146.0.7680.179"
+        "ffmpeg.branding=Chromium")
+      list(FIND DAWN_CODEC_BUILD "${REQUIRED_MARKER}" MARKER_INDEX)
+      if(MARKER_INDEX EQUAL -1)
+        message(FATAL_ERROR
+                "CEF_ROOT marker is missing '${REQUIRED_MARKER}': ${CEF_ROOT}")
+      endif()
+    endforeach()
+  endif()
+
+  set(CEF_ROOT "${CEF_ROOT}" CACHE PATH "Path to a CEF binary distribution" FORCE)
+  message(STATUS "Using CEF binary distribution from ${CEF_ROOT}")
+else()
+  # Download and extract the upstream CEF binary distribution.
+  include(DownloadCEF)
+  DownloadCEF("${CEF_PLATFORM}" "${CEF_VERSION}" "${CMAKE_SOURCE_DIR}/third_party/cef")
+endif()
 
 # Add the CEF binary distribution's cmake/ directory to the module path.
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CEF_ROOT}/cmake")
