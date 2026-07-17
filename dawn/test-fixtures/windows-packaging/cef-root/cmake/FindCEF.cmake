@@ -1,0 +1,1 @@
+# Synthetic Dawn packaging fixture.

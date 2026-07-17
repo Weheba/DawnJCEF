@@ -168,6 +168,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 option(DAWN_NATIVE_CODECS
        "Require Dawn's native-codec CEF distribution marker" OFF)
 if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
+  if(DAWN_NATIVE_CODECS)
+    set(CEF_ROOT_EXPECTED_VERSION
+        "146.0.12+g316d9cf+chromium-146.0.7680.179")
+  else()
+    set(CEF_ROOT_EXPECTED_VERSION "${CEF_VERSION}")
+  endif()
   get_filename_component(CEF_ROOT "${CEF_ROOT}" ABSOLUTE)
   if(NOT EXISTS "${CEF_ROOT}/cmake/FindCEF.cmake")
     message(FATAL_ERROR "CEF_ROOT is not a CEF binary distribution: ${CEF_ROOT}")
@@ -178,7 +184,7 @@ if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
   file(STRINGS "${CEF_ROOT}/include/cef_version.h" CEF_VERSION_LINE
        REGEX "^#define CEF_VERSION ")
   if(NOT "${CEF_VERSION_LINE}" STREQUAL
-     "#define CEF_VERSION \"146.0.10+g8219561+chromium-146.0.7680.179\"")
+     "#define CEF_VERSION \"${CEF_ROOT_EXPECTED_VERSION}\"")
     message(FATAL_ERROR "CEF_ROOT has an unexpected CEF version: ${CEF_VERSION_LINE}")
   endif()
 

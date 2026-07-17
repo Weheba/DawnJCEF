@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$CefRoot,
     [string]$BuildDirectory = "jcef_build",
-    [string]$ArtifactDirectory = "dawn-artifacts"
+    [string]$ArtifactDirectory = "dawn-artifacts",
+    [string]$PythonExecutable
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,6 +14,23 @@ $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $resolvedCefRoot = [System.IO.Path]::GetFullPath($CefRoot)
 $resolvedBuildDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot $BuildDirectory))
 $resolvedArtifactDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot $ArtifactDirectory))
+$vendoredSix = Join-Path $repositoryRoot "tools\buildtools\external_bin\gsutil\gsutil_4.68\gsutil\third_party\six"
+$cmakeArguments = @(
+    "-S", $repositoryRoot,
+    "-B", $resolvedBuildDirectory,
+    "-G", "Visual Studio 17 2022",
+    "-A", "x64",
+    "-DCEF_ROOT=$resolvedCefRoot",
+    "-DDAWN_NATIVE_CODECS=ON"
+)
+
+if ($PythonExecutable) {
+    $resolvedPythonExecutable = [System.IO.Path]::GetFullPath($PythonExecutable)
+    if (-not (Test-Path -LiteralPath $resolvedPythonExecutable -PathType Leaf)) {
+        throw "Python executable does not exist: $resolvedPythonExecutable"
+    }
+    $cmakeArguments += "-DPYTHON_EXECUTABLE=$resolvedPythonExecutable"
+}
 
 if (-not (Test-Path -LiteralPath (Join-Path $resolvedCefRoot "cmake\FindCEF.cmake"))) {
     throw "CEF_ROOT is not a CEF binary distribution: $resolvedCefRoot"
@@ -25,12 +43,21 @@ if (-not $visualStudio) {
     throw "Visual Studio 2022 Desktop development with C++ is required."
 }
 
-& cmake -S $repositoryRoot -B $resolvedBuildDirectory `
-    -G "Visual Studio 17 2022" -A x64 `
-    "-DCEF_ROOT=$resolvedCefRoot" `
-    "-DDAWN_NATIVE_CODECS=ON"
-if ($LASTEXITCODE -ne 0) {
-    throw "JCEF CMake configuration failed with exit code $LASTEXITCODE."
+$previousPythonPath = $env:PYTHONPATH
+$cmakeExitCode = 1
+try {
+    $env:PYTHONPATH = if ($previousPythonPath) {
+        "$vendoredSix$([System.IO.Path]::PathSeparator)$previousPythonPath"
+    } else {
+        $vendoredSix
+    }
+    & cmake @cmakeArguments
+    $cmakeExitCode = $LASTEXITCODE
+} finally {
+    $env:PYTHONPATH = $previousPythonPath
+}
+if ($cmakeExitCode -ne 0) {
+    throw "JCEF CMake configuration failed with exit code $cmakeExitCode."
 }
 
 & cmake --build $resolvedBuildDirectory --config Release --parallel

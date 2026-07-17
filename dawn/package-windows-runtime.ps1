@@ -12,11 +12,12 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $jcefCommit = "d3de827"
-$cefVersion = "146.0.10+g8219561+chromium-146.0.7680.179"
+$upstreamCefVersion = "146.0.10+g8219561+chromium-146.0.7680.179"
+$nativeCefVersion = "146.0.12+g316d9cf+chromium-146.0.7680.179"
 $codecRevision = "native-codecs.2"
-$releaseTag = "jcef-d3de827+cef-$cefVersion"
+$releaseTag = "jcef-d3de827+cef-$upstreamCefVersion"
 $platform = "windows-amd64"
-$basename = "jcef-natives-$platform-jcef-$jcefCommit+cef-$cefVersion+$codecRevision"
+$basename = "jcef-natives-$platform-jcef-$jcefCommit+cef-$nativeCefVersion+$codecRevision"
 
 $resolvedNativeDirectory = [System.IO.Path]::GetFullPath($NativeDirectory)
 $resolvedCefRoot = [System.IO.Path]::GetFullPath($CefRoot)
@@ -37,7 +38,7 @@ if (-not (Test-Path -LiteralPath $cefVersionHeader)) {
     throw "CEF_ROOT does not contain include\cef_version.h: $resolvedCefRoot"
 }
 if (-not (Select-String -LiteralPath $cefVersionHeader -SimpleMatch `
-        "#define CEF_VERSION `"$cefVersion`"" -Quiet)) {
+        "#define CEF_VERSION `"$nativeCefVersion`"" -Quiet)) {
     throw "CEF_ROOT has an unexpected CEF version: $resolvedCefRoot"
 }
 if (-not (Test-Path -LiteralPath $cefBuildMarker)) {
@@ -60,6 +61,8 @@ $requiredFiles = @(
     "chrome_200_percent.pak",
     "chrome_elf.dll",
     "d3dcompiler_47.dll",
+    "dxcompiler.dll",
+    "dxil.dll",
     "icudtl.dat",
     "jcef.dll",
     "jcef_helper.exe",
@@ -111,7 +114,7 @@ $metadata = [ordered]@{
     release_tag = $releaseTag
     platform = $platform
     cef_source = "https://github.com/Weheba/DawnCEFSource"
-    cef_version = $cefVersion
+    cef_version = $nativeCefVersion
     dawn_codec_revision = $codecRevision
 }
 $metadata | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $stagingDirectory "build_meta.json") -Encoding utf8

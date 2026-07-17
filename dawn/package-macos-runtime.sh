@@ -13,11 +13,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPOSITORY_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 JCEF_COMMIT="d3de827"
-CEF_VERSION="146.0.10+g8219561+chromium-146.0.7680.179"
+UPSTREAM_CEF_VERSION="146.0.10+g8219561+chromium-146.0.7680.179"
+NATIVE_CEF_VERSION="146.0.12+g316d9cf+chromium-146.0.7680.179"
 CODEC_REVISION="native-codecs.2"
-RELEASE_TAG="jcef-d3de827+cef-$CEF_VERSION"
+RELEASE_TAG="jcef-d3de827+cef-$UPSTREAM_CEF_VERSION"
 PLATFORM="macosx-arm64"
-BASENAME="jcef-natives-$PLATFORM-jcef-$JCEF_COMMIT+cef-$CEF_VERSION+$CODEC_REVISION"
+BASENAME="jcef-natives-$PLATFORM-jcef-$JCEF_COMMIT+cef-$NATIVE_CEF_VERSION+$CODEC_REVISION"
 
 APP_BUNDLE="$BUILD_DIRECTORY/native/Release/jcef_app.app"
 FRAMEWORKS_DIRECTORY="$APP_BUNDLE/Contents/Frameworks"
@@ -30,7 +31,7 @@ if [[ ! -f "$CEF_ROOT/cmake/FindCEF.cmake" || ! -f "$CEF_VERSION_HEADER" ]]; the
   echo "CEF_ROOT is not a CEF binary distribution: $CEF_ROOT" >&2
   exit 1
 fi
-if ! grep -Fqx "#define CEF_VERSION \"$CEF_VERSION\"" "$CEF_VERSION_HEADER"; then
+if ! grep -Fqx "#define CEF_VERSION \"$NATIVE_CEF_VERSION\"" "$CEF_VERSION_HEADER"; then
   echo "CEF_ROOT has an unexpected CEF version: $CEF_ROOT" >&2
   exit 1
 fi
@@ -112,7 +113,7 @@ cat >"$STAGING_DIRECTORY/build_meta.json" <<EOF
   "release_tag": "$RELEASE_TAG",
   "platform": "$PLATFORM",
   "cef_source": "https://github.com/Weheba/DawnCEFSource",
-  "cef_version": "$CEF_VERSION",
+  "cef_version": "$NATIVE_CEF_VERSION",
   "dawn_codec_revision": "$CODEC_REVISION"
 }
 EOF
