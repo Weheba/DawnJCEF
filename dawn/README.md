@@ -71,3 +71,23 @@ and Chromium version are unchanged.
 Linux remains on the upstream `146.0.10` native artifact. The Dawn native-codec
 variant is deliberately Windows/macOS only because those platforms provide the
 required H.264 and AAC operating-system decoders.
+
+## Dawn native extras (`native/DawnCefExtras_N.cpp`)
+
+JNI entry points for `org.cef.browser.DawnCefExtras`, a class that ships in the Dawn launcher (core:browser),
+not in the upstream `jcef-api` jar. They add API without changing any upstream class, signature or the JCEF
+compatibility tag, and a launcher running an older runtime just sees the capability as absent
+(`UnsatisfiedLinkError` on first use, caught once).
+
+- `N_ExtrasVersion()` - capability probe (1).
+- `N_WasHidden(browser, hidden)` - `CefBrowserHost::WasHidden` for off-screen browsers. Stock JCEF's
+  `setWindowVisibility` is a no-op outside macOS windowed browsers, so OSR pages never learned they were
+  hidden (compositor kept producing frames, no timer throttling, foreground renderer priority).
+- `N_CreatePersistentContext(handler, cachePath, persistSessionCookies)` - `CefRequestContext::CreateContext`
+  with a disk `cache_path` (the upstream TODO in `CefRequestContext_N.cpp`). With the Chrome runtime the path
+  must be a DIRECT child of `CefSettings.root_cache_path`, otherwise CEF logs "Cannot create profile at path"
+  and falls back to the global profile.
+
+Linked against the upstream 146.0.10 binary distribution, the resulting `jcef.dll` loads and runs against
+Dawn's 146.0.15 native-codec `libcef.dll` (same API hash); release builds still link against the DawnCEF
+distribution through `dawn/build-windows.ps1`.
