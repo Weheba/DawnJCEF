@@ -19,6 +19,8 @@ $expectedCodecRevision = "native-codecs.3"
 $expectedArtifactSuffix = "+$expectedCodecRevision"
 $expectedReleaseTag = "jcef-d3de827+cef-146.0.10+g8219561+chromium-146.0.7680.179"
 $expectedCefVersion = "146.0.15+g566c566+chromium-146.0.7680.179"
+# Placeholder build commit: the synthetic jcef.dll has no version resource to cross-check it against.
+$syntheticSourceCommit = "0123456789abcdef0123456789abcdef01234567"
 $requiredFiles = @(
     "chrome_100_percent.pak",
     "chrome_200_percent.pak",
@@ -52,7 +54,8 @@ Set-Content -LiteralPath (Join-Path $nativeDirectory "locales\en-US.pak") -Value
 & (Join-Path $scriptRoot "package-windows-runtime.ps1") `
     -NativeDirectory $nativeDirectory `
     -CefRoot $cefRoot `
-    -OutputDirectory $outputDirectory
+    -OutputDirectory $outputDirectory `
+    -JcefSourceCommit $syntheticSourceCommit
 
 $jarPath = Join-Path $outputDirectory "jcef-natives-windows-amd64-jcef-d3de827+cef-$expectedCefVersion+$expectedCodecRevision.jar"
 $tarPath = Join-Path $outputDirectory "jcef-natives-windows-amd64-jcef-d3de827+cef-$expectedCefVersion+$expectedCodecRevision.tar.gz"
@@ -109,6 +112,7 @@ if ($LASTEXITCODE -ne 0) {
 
 $buildMetadata = Get-Content -LiteralPath (Join-Path $extractDirectory "build_meta.json") -Raw | ConvertFrom-Json
 $expectedMetadata = [ordered]@{
+    jcef_url = "https://github.com/Weheba/DawnJCEF/commit/$syntheticSourceCommit"
     release_tag = $expectedReleaseTag
     platform = "windows-amd64"
     cef_version = $expectedCefVersion

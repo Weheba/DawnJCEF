@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 3 ]]; then
-  echo "usage: $0 <jcef-build-directory> <cef-binary-distribution> <output-directory>" >&2
+  echo "usage: $0 <jcef-build-directory> <cef-binary-distribution> <output-directory> [jcef-source-commit]" >&2
   exit 2
 fi
 
@@ -11,6 +11,22 @@ CEF_ROOT="$(cd "$2" && pwd)"
 OUTPUT_DIRECTORY="$3"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPOSITORY_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Full SHA of the DawnJCEF commit the runtime was built from; build_meta.json's jcef_url names it.
+# Defaults to this checkout's HEAD, which must have no uncommitted changes to tracked files.
+JCEF_SOURCE_COMMIT="${4:-}"
+if [[ -z "$JCEF_SOURCE_COMMIT" ]]; then
+  JCEF_SOURCE_COMMIT="$(git -C "$REPOSITORY_ROOT" rev-parse HEAD)"
+  if [[ -n "$(git -C "$REPOSITORY_ROOT" status --porcelain --untracked-files=no)" ]]; then
+    echo "The DawnJCEF checkout has uncommitted changes, so no commit describes this runtime. Commit them first." >&2
+    exit 1
+  fi
+fi
+JCEF_SOURCE_COMMIT="$(printf '%s' "$JCEF_SOURCE_COMMIT" | tr 'A-F' 'a-f')"
+if [[ ! "$JCEF_SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "jcef-source-commit must be a full 40-character commit SHA: $JCEF_SOURCE_COMMIT" >&2
+  exit 1
+fi
 
 JCEF_COMMIT="d3de827"
 UPSTREAM_CEF_VERSION="146.0.10+g8219561+chromium-146.0.7680.179"
@@ -109,7 +125,7 @@ cp "$CEF_ROOT/README.txt" "$STAGING_DIRECTORY/README.txt"
 
 cat >"$STAGING_DIRECTORY/build_meta.json" <<EOF
 {
-  "jcef_url": "https://github.com/Weheba/DawnJCEF/commit/d3de8278626c160d4631db3fda2df7b77cc1e5c4",
+  "jcef_url": "https://github.com/Weheba/DawnJCEF/commit/$JCEF_SOURCE_COMMIT",
   "release_tag": "$RELEASE_TAG",
   "platform": "$PLATFORM",
   "cef_source": "https://github.com/Weheba/DawnCEFSource",
