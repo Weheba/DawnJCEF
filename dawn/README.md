@@ -24,6 +24,12 @@ launcher-compatible native runtime jar under `dawn-artifacts`. The pinned
 Chromium formatter downloader requires Python 3.11 or older; pass a compatible
 interpreter explicitly when the system default is newer.
 
+`build_meta.json`'s `jcef_url` names the DawnJCEF commit the runtime was built
+from: the checked-out `HEAD`, which must have no uncommitted changes, or
+`-JcefSourceCommit <sha>` when packaging a build made elsewhere. Packaging fails
+if `jcef.dll`'s version stamp (`+g<sha>`) names a different commit. Launchers pin
+`jcef_url`, so bump the launcher's pin with every new runtime.
+
 ### Synthetic packaging verification
 
 To verify the Windows packaging contract without compiling JCEF, run:

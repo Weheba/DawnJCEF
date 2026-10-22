@@ -5,7 +5,10 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$CefRoot,
     [Parameter(Mandatory = $true)]
-    [string]$OutputDirectory
+    [string]$OutputDirectory,
+    # Full SHA of the DawnJCEF commit jcef.dll was built from; build_meta.json's jcef_url names it.
+    # Defaults to this checkout's HEAD, which must have no uncommitted changes to tracked files.
+    [string]$JcefSourceCommit
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,6 +21,23 @@ $codecRevision = "native-codecs.3"
 $releaseTag = "jcef-d3de827+cef-$upstreamCefVersion"
 $platform = "windows-amd64"
 $basename = "jcef-natives-$platform-jcef-$jcefCommit+cef-$nativeCefVersion+$codecRevision"
+
+$repositoryRoot = Split-Path -Parent $PSScriptRoot
+if (-not $JcefSourceCommit) {
+    $JcefSourceCommit = & git -C $repositoryRoot rev-parse HEAD
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not read the DawnJCEF commit; pass -JcefSourceCommit."
+    }
+    $uncommitted = & git -C $repositoryRoot status --porcelain --untracked-files=no
+    if ($LASTEXITCODE -ne 0 -or $uncommitted) {
+        throw "The DawnJCEF checkout has uncommitted changes, so no commit describes this jcef.dll. Commit them first."
+    }
+}
+$JcefSourceCommit = $JcefSourceCommit.Trim().ToLowerInvariant()
+if ($JcefSourceCommit -notmatch '^[0-9a-f]{40}$') {
+    throw "JcefSourceCommit must be a full 40-character commit SHA: $JcefSourceCommit"
+}
+$jcefUrl = "https://github.com/Weheba/DawnJCEF/commit/$JcefSourceCommit"
 
 $resolvedNativeDirectory = [System.IO.Path]::GetFullPath($NativeDirectory)
 $resolvedCefRoot = [System.IO.Path]::GetFullPath($CefRoot)
@@ -84,6 +104,17 @@ if (-not (Test-Path -LiteralPath (Join-Path $resolvedNativeDirectory "locales"))
     throw "Required JCEF locales directory is missing."
 }
 
+# tools/make_version_header.py stamps jcef.dll's version as <cef>.<commit count>+g<short sha>, so a jcef.dll
+# built from another commit than the one jcef_url names is caught here instead of shipping wrong provenance.
+$jcefDllVersion = (Get-Item -LiteralPath (Join-Path $resolvedNativeDirectory "jcef.dll")).VersionInfo.ProductVersion
+if ($jcefDllVersion -match '\+g([0-9a-f]{7,40})$') {
+    if (-not $JcefSourceCommit.StartsWith($Matches[1])) {
+        throw "jcef.dll was built from commit $($Matches[1]), not $JcefSourceCommit ($jcefDllVersion)."
+    }
+} else {
+    Write-Warning "jcef.dll carries no '+g<commit>' version; jcef_url is taken on trust: $jcefUrl"
+}
+
 New-Item -ItemType Directory -Force -Path $resolvedOutputDirectory | Out-Null
 if (Test-Path -LiteralPath $stagingDirectory) {
     Get-ChildItem -LiteralPath $stagingDirectory -Force | Remove-Item -Recurse -Force
@@ -110,7 +141,7 @@ Copy-Item -LiteralPath (Join-Path $resolvedCefRoot "README.txt") `
     -Destination (Join-Path $stagingDirectory "README.txt")
 
 $metadata = [ordered]@{
-    jcef_url = "https://github.com/Weheba/DawnJCEF/commit/d3de8278626c160d4631db3fda2df7b77cc1e5c4"
+    jcef_url = $jcefUrl
     release_tag = $releaseTag
     platform = $platform
     cef_source = "https://github.com/Weheba/DawnCEFSource"
