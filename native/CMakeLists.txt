@@ -61,6 +61,7 @@ set(JCEF_SRCS
   CefCallback_N.cpp
   CefCallback_N.h
   CefRequestContext_N.cpp
+  DawnCefExtras_N.cpp
   CefRequestContext_N.h
   CefResourceReadCallback_N.cpp
   CefResourceReadCallback_N.h
