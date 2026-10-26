@@ -4,6 +4,7 @@ set -euo pipefail
 # Builds JCEF against a Dawn native-codec CEF binary distribution and packages
 # the launcher runtime jar. The architecture follows the distribution:
 # DAWN_MAC_ARCH=arm64 (default) or x86_64, which cross-compiles on Apple silicon.
+# Needs cmake, ninja and ant (JCEF bundles its Java test app) on PATH.
 
 if [[ $# -lt 1 ]]; then
   echo "usage: $0 <cef-binary-distribution> [build-directory] [artifact-directory]" >&2
@@ -35,7 +36,7 @@ if ! xcodebuild -version >/dev/null 2>&1; then
   exit 1
 fi
 
-for tool in cmake ninja; do
+for tool in cmake ninja ant; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     echo "$tool must be on PATH." >&2
     exit 1
@@ -63,7 +64,7 @@ cmake -S "$REPOSITORY_ROOT" -B "$BUILD_DIRECTORY" \
   -DCEF_ROOT="$CEF_ROOT"
 cmake --build "$BUILD_DIRECTORY" --parallel
 
-"$SCRIPT_DIR/package-macos-runtime.sh" \
+bash "$SCRIPT_DIR/package-macos-runtime.sh" \
   "$BUILD_DIRECTORY" \
   "$CEF_ROOT" \
   "$ARTIFACT_DIRECTORY"
