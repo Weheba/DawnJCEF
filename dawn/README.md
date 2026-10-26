@@ -52,7 +52,7 @@ DAWN_MAC_ARCH=x86_64 ./dawn/build-macos.sh "$HOME/DawnCEFBuild/.../<x64 distribu
 
 The macOS build requires the full Xcode 26 toolchain selected with
 `xcode-select`, and `cmake`, `ninja` and `ant` on `PATH`. It needs a
-`native-codecs.4` distribution (`146.0.25+g859e06c`): revision 4 is the first
+`native-codecs.4` distribution (`146.0.26+g522df36`): revision 4 is the first
 Dawn CEF build for macOS. The package name and `build_meta.json` platform follow
 the architecture of the built `libjcef.dylib`: `macosx-arm64`, or
 `macosx-amd64` for an x86_64 build cross-compiled on Apple silicon.

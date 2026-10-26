@@ -187,7 +187,7 @@ if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
     elseif("codec.revision=native-codecs.4" IN_LIST DAWN_CODEC_BUILD)
       set(DAWN_CODEC_REVISION "native-codecs.4")
       set(CEF_ROOT_EXPECTED_VERSION
-          "146.0.25+g859e06c+chromium-146.0.7680.179")
+          "146.0.26+g522df36+chromium-146.0.7680.179")
     else()
       message(FATAL_ERROR
               "CEF_ROOT marker names no known Dawn codec revision: ${CEF_ROOT}")

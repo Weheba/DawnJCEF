@@ -51,7 +51,7 @@ fi
 # Each Dawn codec revision pins one CEF version (see CMakeLists.txt).
 if grep -Fqx "codec.revision=native-codecs.4" "$CEF_BUILD_MARKER"; then
   CODEC_REVISION="native-codecs.4"
-  NATIVE_CEF_VERSION="146.0.25+g859e06c+chromium-146.0.7680.179"
+  NATIVE_CEF_VERSION="146.0.26+g522df36+chromium-146.0.7680.179"
 elif grep -Fqx "codec.revision=native-codecs.3" "$CEF_BUILD_MARKER"; then
   CODEC_REVISION="native-codecs.3"
   NATIVE_CEF_VERSION="146.0.15+g566c566+chromium-146.0.7680.179"
