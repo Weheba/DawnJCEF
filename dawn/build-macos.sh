@@ -42,6 +42,15 @@ for tool in cmake ninja; do
   fi
 done
 
+# macOS ships python3 but no `python`, which CMake's FindPythonInterp looks for. The pinned clang-format
+# downloader needs Python 3.11 or older; PYTHON_EXECUTABLE selects a specific interpreter.
+PYTHON_EXECUTABLE="${PYTHON_EXECUTABLE:-$(command -v python3 || true)}"
+if [[ -z "$PYTHON_EXECUTABLE" ]]; then
+  echo "python3 must be on PATH, or set PYTHON_EXECUTABLE." >&2
+  exit 1
+fi
+export PYTHON_EXECUTABLE
+
 # The pinned clang-format downloader imports six from the vendored gsutil.
 VENDORED_SIX="$REPOSITORY_ROOT/tools/buildtools/external_bin/gsutil/gsutil_4.68/gsutil/third_party/six"
 export PYTHONPATH="$VENDORED_SIX${PYTHONPATH:+:$PYTHONPATH}"
