@@ -7,6 +7,7 @@
 
 #include "include/cef_browser.h"
 #include "include/cef_request_context.h"
+#include "include/cef_task.h"
 #include "jni_scoped_helpers.h"
 #include "jni_util.h"
 #include "request_context_handler.h"
@@ -14,9 +15,10 @@
 extern "C" {
 
 // Version of this extension surface. Bumped whenever a Dawn native entry point is added.
+// 1: N_WasHidden, N_CreatePersistentContext. 2: N_SetAudioMuted.
 JNIEXPORT jint JNICALL
 Java_org_cef_browser_DawnCefExtras_N_1ExtrasVersion(JNIEnv* env, jclass cls) {
-  return 1;
+  return 2;
 }
 
 // CefRequestContext::CreateContext with a disk-backed cache_path. Upstream JCEF only exposes
@@ -68,6 +70,35 @@ Java_org_cef_browser_DawnCefExtras_N_1WasHidden(JNIEnv* env,
   if (!host.get() || !host->IsWindowRenderingDisabled())
     return;
   host->WasHidden(jhidden != JNI_FALSE);
+}
+
+// CefBrowserHost::SetAudioMuted: mutes or unmutes one browser (its WebContents), for every frame
+// and every later navigation, without Chromium's process-wide --mute-audio. Works for windowed and
+// off-screen browsers.
+//
+// On the CEF UI thread the change applies synchronously, so it is read back with IsAudioMuted and
+// the result says whether the browser is now in the requested state. Called from
+// LifeSpanHandler::OnAfterCreated (where CEF has not started the first navigation yet), that makes
+// "muted before anything loads" checkable. Elsewhere CEF posts the change to the UI thread and
+// IsAudioMuted cannot be called, so the result only says the request reached a live browser host.
+// Returns false when the Java browser has no native browser (not created yet, or closed).
+JNIEXPORT jboolean JNICALL
+Java_org_cef_browser_DawnCefExtras_N_1SetAudioMuted(JNIEnv* env,
+                                                   jclass cls,
+                                                   jobject jbrowser,
+                                                   jboolean jmuted) {
+  CefRefPtr<CefBrowser> browser =
+      GetCefFromJNIObject<CefBrowser>(env, jbrowser, "CefBrowser");
+  if (!browser.get())
+    return JNI_FALSE;
+  CefRefPtr<CefBrowserHost> host = browser->GetHost();
+  if (!host.get())
+    return JNI_FALSE;
+  const bool muted = jmuted != JNI_FALSE;
+  host->SetAudioMuted(muted);
+  if (CefCurrentlyOn(TID_UI))
+    return host->IsAudioMuted() == muted ? JNI_TRUE : JNI_FALSE;
+  return JNI_TRUE;
 }
 
 }  // extern "C"

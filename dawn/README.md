@@ -85,7 +85,7 @@ not in the upstream `jcef-api` jar. They add API without changing any upstream c
 compatibility tag, and a launcher running an older runtime just sees the capability as absent
 (`UnsatisfiedLinkError` on first use, caught once).
 
-- `N_ExtrasVersion()` - capability probe (1).
+- `N_ExtrasVersion()` - capability probe: 1 for the entry points below, 2 adds `N_SetAudioMuted`.
 - `N_WasHidden(browser, hidden)` - `CefBrowserHost::WasHidden` for off-screen browsers. Stock JCEF's
   `setWindowVisibility` is a no-op outside macOS windowed browsers, so OSR pages never learned they were
   hidden (compositor kept producing frames, no timer throttling, foreground renderer priority).
@@ -93,6 +93,12 @@ compatibility tag, and a launcher running an older runtime just sees the capabil
   with a disk `cache_path` (the upstream TODO in `CefRequestContext_N.cpp`). With the Chrome runtime the path
   must be a DIRECT child of `CefSettings.root_cache_path`, otherwise CEF logs "Cannot create profile at path"
   and falls back to the global profile.
+- `N_SetAudioMuted(browser, muted)` (extras 2) - `CefBrowserHost::SetAudioMuted` for one browser, so the launcher
+  can keep ads silent without Chromium's process-wide `--mute-audio` (which also silences the browsers that are
+  meant to play sound). The mute holds for every frame and later navigation of that browser. On the CEF UI
+  thread it applies synchronously and returns whether `IsAudioMuted` now matches, so a call from
+  `onAfterCreated` (before CEF starts the first navigation) is checked; elsewhere it returns whether the request
+  reached a live browser host.
 
 Linked against the upstream 146.0.10 binary distribution, the resulting `jcef.dll` loads and runs against
 Dawn's 146.0.15 native-codec `libcef.dll` (same API hash); release builds still link against the DawnCEF
