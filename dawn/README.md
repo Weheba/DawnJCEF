@@ -43,14 +43,23 @@ The script uses the tracked fixture under
 files, and verifies that the packaged artifact name and `build_meta.json`
 identify `native-codecs.3`.
 
-## macOS arm64
+## macOS
 
 ```bash
 ./dawn/build-macos.sh "$HOME/DawnCEFBuild/.../<distribution>"
+DAWN_MAC_ARCH=x86_64 ./dawn/build-macos.sh "$HOME/DawnCEFBuild/.../<x64 distribution>" jcef_build_x64
 ```
 
 The macOS build requires the full Xcode 26 toolchain selected with
-`xcode-select`.
+`xcode-select`, and `cmake` and `ninja` on `PATH`. It needs a
+`native-codecs.4` distribution (`146.0.25+g859e06c`): revision 4 is the first
+Dawn CEF build for macOS. The package name and `build_meta.json` platform follow
+the architecture of the built `libjcef.dylib`: `macosx-arm64`, or
+`macosx-amd64` for an x86_64 build cross-compiled on Apple silicon.
+
+The packaged files are unsigned (the arm64 linker adds ad-hoc signatures). The
+launcher's release signs every nested Mach-O and bundle with its Developer ID
+during packaging, as it does for the upstream natives.
 
 ## Runtime contract
 
