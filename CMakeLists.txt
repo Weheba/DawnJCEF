@@ -179,15 +179,20 @@ if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
     endif()
     file(STRINGS "${CEF_ROOT}/dawn-codec-build.properties" DAWN_CODEC_BUILD)
     # Every Dawn codec revision is built from one immutable DawnCEFSource commit, so it pins one
-    # exact CEF version. native-codecs.4 adds the MP4 AAC demuxer fix and is the first macOS build.
+    # exact CEF version. native-codecs.5 adds the MP4 AAC demuxer fix, is the first macOS build and
+    # leaves out OpenH264. native-codecs.4 was never released and is not accepted.
     if("codec.revision=native-codecs.3" IN_LIST DAWN_CODEC_BUILD)
       set(DAWN_CODEC_REVISION "native-codecs.3")
       set(CEF_ROOT_EXPECTED_VERSION
           "146.0.15+g566c566+chromium-146.0.7680.179")
-    elseif("codec.revision=native-codecs.4" IN_LIST DAWN_CODEC_BUILD)
-      set(DAWN_CODEC_REVISION "native-codecs.4")
+    elseif("codec.revision=native-codecs.5" IN_LIST DAWN_CODEC_BUILD)
+      set(DAWN_CODEC_REVISION "native-codecs.5")
       set(CEF_ROOT_EXPECTED_VERSION
-          "146.0.26+g522df36+chromium-146.0.7680.179")
+          "146.0.27+g8a3c83a+chromium-146.0.7680.179")
+      if(NOT "media.use-openh264=false" IN_LIST DAWN_CODEC_BUILD)
+        message(FATAL_ERROR
+                "CEF_ROOT marker is missing 'media.use-openh264=false': ${CEF_ROOT}")
+      endif()
     else()
       message(FATAL_ERROR
               "CEF_ROOT marker names no known Dawn codec revision: ${CEF_ROOT}")

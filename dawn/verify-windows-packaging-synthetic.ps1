@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
-    [string]$Workspace = (Join-Path ([System.IO.Path]::GetTempPath()) "dawn-jcef-synthetic-windows-packaging")
+    [string]$Workspace = (Join-Path ([System.IO.Path]::GetTempPath()) "dawn-jcef-synthetic-windows-packaging"),
+    [ValidateSet("native-codecs.3", "native-codecs.5")]
+    [string]$CodecRevision = "native-codecs.3"
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,10 +17,14 @@ $cefRoot = Join-Path $resolvedWorkspace "cef-root"
 $nativeDirectory = Join-Path $resolvedWorkspace "native"
 $outputDirectory = Join-Path $resolvedWorkspace "artifacts"
 $extractDirectory = Join-Path $resolvedWorkspace "extracted"
-$expectedCodecRevision = "native-codecs.3"
+$expectedCodecRevision = $CodecRevision
 $expectedArtifactSuffix = "+$expectedCodecRevision"
 $expectedReleaseTag = "jcef-d3de827+cef-146.0.10+g8219561+chromium-146.0.7680.179"
-$expectedCefVersion = "146.0.15+g566c566+chromium-146.0.7680.179"
+$fixtureCefVersion = "146.0.15+g566c566+chromium-146.0.7680.179"
+$expectedCefVersion = @{
+    "native-codecs.3" = $fixtureCefVersion
+    "native-codecs.5" = "146.0.27+g8a3c83a+chromium-146.0.7680.179"
+}[$CodecRevision]
 # Placeholder build commit: the synthetic jcef.dll has no version resource to cross-check it against.
 $syntheticSourceCommit = "0123456789abcdef0123456789abcdef01234567"
 $requiredFiles = @(
@@ -43,6 +49,16 @@ $requiredFiles = @(
 
 New-Item -ItemType Directory -Path $resolvedWorkspace -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $fixtureRoot "cef-root") -Destination $cefRoot -Recurse
+if ($CodecRevision -ne "native-codecs.3") {
+    # The fixture is a native-codecs.3 root; retarget its marker and version header.
+    $markerPath = Join-Path $cefRoot "dawn-codec-build.properties"
+    $versionHeaderPath = Join-Path $cefRoot "include\cef_version.h"
+    $marker = @((Get-Content -LiteralPath $markerPath) -replace '^codec\.revision=.*$', "codec.revision=$CodecRevision")
+    $marker += "media.use-openh264=false"
+    [System.IO.File]::WriteAllLines($markerPath, [string[]]$marker)
+    (Get-Content -LiteralPath $versionHeaderPath -Raw).Replace($fixtureCefVersion, $expectedCefVersion) |
+        Set-Content -LiteralPath $versionHeaderPath -NoNewline -Encoding ascii
+}
 
 New-Item -ItemType Directory -Path $nativeDirectory | Out-Null
 foreach ($file in $requiredFiles) {

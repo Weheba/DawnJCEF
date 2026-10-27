@@ -48,13 +48,11 @@ if [[ ! -f "$CEF_BUILD_MARKER" ]]; then
   exit 1
 fi
 
-# Each Dawn codec revision pins one CEF version (see CMakeLists.txt).
-if grep -Fqx "codec.revision=native-codecs.4" "$CEF_BUILD_MARKER"; then
-  CODEC_REVISION="native-codecs.4"
-  NATIVE_CEF_VERSION="146.0.26+g522df36+chromium-146.0.7680.179"
-elif grep -Fqx "codec.revision=native-codecs.3" "$CEF_BUILD_MARKER"; then
-  CODEC_REVISION="native-codecs.3"
-  NATIVE_CEF_VERSION="146.0.15+g566c566+chromium-146.0.7680.179"
+# Each Dawn codec revision pins one CEF version (see CMakeLists.txt). native-codecs.5 is the
+# first macOS build.
+if grep -Fqx "codec.revision=native-codecs.5" "$CEF_BUILD_MARKER"; then
+  CODEC_REVISION="native-codecs.5"
+  NATIVE_CEF_VERSION="146.0.27+g8a3c83a+chromium-146.0.7680.179"
 else
   echo "CEF_ROOT marker names no known Dawn codec revision: $CEF_ROOT" >&2
   exit 1
@@ -82,7 +80,8 @@ for entry in \
   "codec.revision=$CODEC_REVISION" \
   "cef.source.commit=82195616d8405e6081a0d90924707b82aa9e4141" \
   "chromium.version=146.0.7680.179" \
-  "ffmpeg.branding=Chromium"; do
+  "ffmpeg.branding=Chromium" \
+  "media.use-openh264=false"; do
   if ! grep -Fqx "$entry" "$CEF_BUILD_MARKER"; then
     echo "CEF_ROOT marker is missing '$entry': $CEF_ROOT" >&2
     exit 1
