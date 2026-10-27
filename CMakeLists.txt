@@ -188,7 +188,7 @@ if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
     elseif("codec.revision=native-codecs.5" IN_LIST DAWN_CODEC_BUILD)
       set(DAWN_CODEC_REVISION "native-codecs.5")
       set(CEF_ROOT_EXPECTED_VERSION
-          "146.0.28+g2c074f3+chromium-146.0.7680.179")
+          "146.0.29+gb647443+chromium-146.0.7680.179")
       if(NOT "media.use-openh264=false" IN_LIST DAWN_CODEC_BUILD)
         message(FATAL_ERROR
                 "CEF_ROOT marker is missing 'media.use-openh264=false': ${CEF_ROOT}")

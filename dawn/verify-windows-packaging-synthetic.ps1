@@ -23,7 +23,7 @@ $expectedReleaseTag = "jcef-d3de827+cef-146.0.10+g8219561+chromium-146.0.7680.17
 $fixtureCefVersion = "146.0.15+g566c566+chromium-146.0.7680.179"
 $expectedCefVersion = @{
     "native-codecs.3" = $fixtureCefVersion
-    "native-codecs.5" = "146.0.28+g2c074f3+chromium-146.0.7680.179"
+    "native-codecs.5" = "146.0.29+gb647443+chromium-146.0.7680.179"
 }[$CodecRevision]
 # Placeholder build commit: the synthetic jcef.dll has no version resource to cross-check it against.
 $syntheticSourceCommit = "0123456789abcdef0123456789abcdef01234567"
