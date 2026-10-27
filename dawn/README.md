@@ -22,7 +22,7 @@ codec marker before configuration can proceed.
 The script configures a Release x64 build, compiles JCEF, and packages a
 launcher-compatible native runtime jar under `dawn-artifacts`. It accepts a
 `native-codecs.3` distribution (`146.0.15+g566c566`, the shipping Windows
-runtime) or a `native-codecs.5` one (`146.0.27+g8a3c83a`, without OpenH264,
+runtime) or a `native-codecs.5` one (`146.0.28+g2c074f3`, without OpenH264,
 whose marker must also say `media.use-openh264=false`); the CEF root's marker
 picks the revision. `native-codecs.4` was never released and is refused. The pinned
 Chromium formatter downloader requires Python 3.11 or older; pass a compatible
@@ -57,7 +57,7 @@ DAWN_MAC_ARCH=x86_64 ./dawn/build-macos.sh "$HOME/DawnCEFBuild/.../<x64 distribu
 
 The macOS build requires the full Xcode 26 toolchain selected with
 `xcode-select`, and `cmake`, `ninja` and `ant` on `PATH`. It needs a
-`native-codecs.5` distribution (`146.0.27+g8a3c83a`), the first Dawn CEF build
+`native-codecs.5` distribution (`146.0.28+g2c074f3`), the first Dawn CEF build
 for macOS; its marker must also say `media.use-openh264=false`. The package name and `build_meta.json` platform follow
 the architecture of the built `libjcef.dylib`: `macosx-arm64`, or
 `macosx-amd64` for an x86_64 build cross-compiled on Apple silicon.
@@ -71,7 +71,7 @@ during packaging, as it does for the upstream natives.
 The Java classes remain the upstream `146.0.10` classes. Dawn changes only the
 native archive coordinates and pins its SHA-256. The custom native engine is
 `146.0.15+g566c566+chromium-146.0.7680.179` (`native-codecs.3`) or
-`146.0.27+g8a3c83a+chromium-146.0.7680.179` (`native-codecs.5`), while the
+`146.0.28+g2c074f3+chromium-146.0.7680.179` (`native-codecs.5`), while the
 package keeps the upstream JCEF compatibility tag:
 
 ```text

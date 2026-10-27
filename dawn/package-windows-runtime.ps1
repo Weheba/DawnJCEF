@@ -20,7 +20,7 @@ $upstreamCefVersion = "146.0.10+g8219561+chromium-146.0.7680.179"
 # native-codecs.5 leaves out OpenH264. native-codecs.4 was never released and is not accepted.
 $nativeCefVersions = [ordered]@{
     "native-codecs.3" = "146.0.15+g566c566+chromium-146.0.7680.179"
-    "native-codecs.5" = "146.0.27+g8a3c83a+chromium-146.0.7680.179"
+    "native-codecs.5" = "146.0.28+g2c074f3+chromium-146.0.7680.179"
 }
 $releaseTag = "jcef-d3de827+cef-$upstreamCefVersion"
 $platform = "windows-amd64"

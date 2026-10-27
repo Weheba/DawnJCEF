@@ -52,7 +52,7 @@ fi
 # first macOS build.
 if grep -Fqx "codec.revision=native-codecs.5" "$CEF_BUILD_MARKER"; then
   CODEC_REVISION="native-codecs.5"
-  NATIVE_CEF_VERSION="146.0.27+g8a3c83a+chromium-146.0.7680.179"
+  NATIVE_CEF_VERSION="146.0.28+g2c074f3+chromium-146.0.7680.179"
 else
   echo "CEF_ROOT marker names no known Dawn codec revision: $CEF_ROOT" >&2
   exit 1
