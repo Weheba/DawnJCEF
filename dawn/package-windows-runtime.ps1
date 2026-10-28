@@ -16,11 +16,14 @@ Set-StrictMode -Version Latest
 
 $jcefCommit = "d3de827"
 $upstreamCefVersion = "146.0.10+g8219561+chromium-146.0.7680.179"
-$nativeCefVersion = "146.0.15+g566c566+chromium-146.0.7680.179"
-$codecRevision = "native-codecs.3"
+# Each Dawn codec revision pins one CEF version (see CMakeLists.txt); the CEF root's marker names it.
+# native-codecs.5 leaves out OpenH264. native-codecs.4 was never released and is not accepted.
+$nativeCefVersions = [ordered]@{
+    "native-codecs.3" = "146.0.15+g566c566+chromium-146.0.7680.179"
+    "native-codecs.5" = "146.0.29+gb647443+chromium-146.0.7680.179"
+}
 $releaseTag = "jcef-d3de827+cef-$upstreamCefVersion"
 $platform = "windows-amd64"
-$basename = "jcef-natives-$platform-jcef-$jcefCommit+cef-$nativeCefVersion+$codecRevision"
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 if (-not $JcefSourceCommit) {
@@ -57,12 +60,20 @@ if (-not (Test-Path -LiteralPath (Join-Path $resolvedCefRoot "cmake\FindCEF.cmak
 if (-not (Test-Path -LiteralPath $cefVersionHeader)) {
     throw "CEF_ROOT does not contain include\cef_version.h: $resolvedCefRoot"
 }
+if (-not (Test-Path -LiteralPath $cefBuildMarker)) {
+    throw "CEF_ROOT is not a Dawn native-codec distribution: $resolvedCefRoot"
+}
+$markerLines = @(Get-Content -LiteralPath $cefBuildMarker)
+$codecRevision = $nativeCefVersions.Keys | Where-Object { $markerLines -contains "codec.revision=$_" } |
+    Select-Object -First 1
+if (-not $codecRevision) {
+    throw "CEF_ROOT marker names no known Dawn codec revision: $resolvedCefRoot"
+}
+$nativeCefVersion = $nativeCefVersions[$codecRevision]
+$basename = "jcef-natives-$platform-jcef-$jcefCommit+cef-$nativeCefVersion+$codecRevision"
 if (-not (Select-String -LiteralPath $cefVersionHeader -SimpleMatch `
         "#define CEF_VERSION `"$nativeCefVersion`"" -Quiet)) {
     throw "CEF_ROOT has an unexpected CEF version: $resolvedCefRoot"
-}
-if (-not (Test-Path -LiteralPath $cefBuildMarker)) {
-    throw "CEF_ROOT is not a Dawn native-codec distribution: $resolvedCefRoot"
 }
 $requiredMarkerEntries = @(
     "codec.revision=$codecRevision",
@@ -70,8 +81,11 @@ $requiredMarkerEntries = @(
     "chromium.version=146.0.7680.179",
     "ffmpeg.branding=Chromium"
 )
+if ($codecRevision -eq "native-codecs.5") {
+    $requiredMarkerEntries += "media.use-openh264=false"
+}
 foreach ($entry in $requiredMarkerEntries) {
-    if (-not (Select-String -LiteralPath $cefBuildMarker -SimpleMatch $entry -Quiet)) {
+    if ($markerLines -notcontains $entry) {
         throw "CEF_ROOT marker is missing '$entry': $resolvedCefRoot"
     }
 }

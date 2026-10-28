@@ -168,15 +168,37 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 option(DAWN_NATIVE_CODECS
        "Require Dawn's native-codec CEF distribution marker" OFF)
 if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
-  if(DAWN_NATIVE_CODECS)
-    set(CEF_ROOT_EXPECTED_VERSION
-        "146.0.15+g566c566+chromium-146.0.7680.179")
-  else()
-    set(CEF_ROOT_EXPECTED_VERSION "${CEF_VERSION}")
-  endif()
   get_filename_component(CEF_ROOT "${CEF_ROOT}" ABSOLUTE)
   if(NOT EXISTS "${CEF_ROOT}/cmake/FindCEF.cmake")
     message(FATAL_ERROR "CEF_ROOT is not a CEF binary distribution: ${CEF_ROOT}")
+  endif()
+  if(DAWN_NATIVE_CODECS)
+    if(NOT EXISTS "${CEF_ROOT}/dawn-codec-build.properties")
+      message(FATAL_ERROR
+              "CEF_ROOT is not a Dawn native-codec distribution: ${CEF_ROOT}")
+    endif()
+    file(STRINGS "${CEF_ROOT}/dawn-codec-build.properties" DAWN_CODEC_BUILD)
+    # Every Dawn codec revision is built from one immutable DawnCEFSource commit, so it pins one
+    # exact CEF version. native-codecs.5 adds the MP4 AAC demuxer fix, is the first macOS build and
+    # leaves out OpenH264. native-codecs.4 was never released and is not accepted.
+    if("codec.revision=native-codecs.3" IN_LIST DAWN_CODEC_BUILD)
+      set(DAWN_CODEC_REVISION "native-codecs.3")
+      set(CEF_ROOT_EXPECTED_VERSION
+          "146.0.15+g566c566+chromium-146.0.7680.179")
+    elseif("codec.revision=native-codecs.5" IN_LIST DAWN_CODEC_BUILD)
+      set(DAWN_CODEC_REVISION "native-codecs.5")
+      set(CEF_ROOT_EXPECTED_VERSION
+          "146.0.29+gb647443+chromium-146.0.7680.179")
+      if(NOT "media.use-openh264=false" IN_LIST DAWN_CODEC_BUILD)
+        message(FATAL_ERROR
+                "CEF_ROOT marker is missing 'media.use-openh264=false': ${CEF_ROOT}")
+      endif()
+    else()
+      message(FATAL_ERROR
+              "CEF_ROOT marker names no known Dawn codec revision: ${CEF_ROOT}")
+    endif()
+  else()
+    set(CEF_ROOT_EXPECTED_VERSION "${CEF_VERSION}")
   endif()
   if(NOT EXISTS "${CEF_ROOT}/include/cef_version.h")
     message(FATAL_ERROR "CEF_ROOT does not contain include/cef_version.h: ${CEF_ROOT}")
@@ -189,13 +211,7 @@ if(DEFINED CEF_ROOT AND NOT "${CEF_ROOT}" STREQUAL "")
   endif()
 
   if(DAWN_NATIVE_CODECS)
-    if(NOT EXISTS "${CEF_ROOT}/dawn-codec-build.properties")
-      message(FATAL_ERROR
-              "CEF_ROOT is not a Dawn native-codec distribution: ${CEF_ROOT}")
-    endif()
-    file(STRINGS "${CEF_ROOT}/dawn-codec-build.properties" DAWN_CODEC_BUILD)
     foreach(REQUIRED_MARKER
-        "codec.revision=native-codecs.3"
         "cef.source.commit=82195616d8405e6081a0d90924707b82aa9e4141"
         "chromium.version=146.0.7680.179"
         "ffmpeg.branding=Chromium")

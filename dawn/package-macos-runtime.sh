@@ -30,11 +30,7 @@ fi
 
 JCEF_COMMIT="d3de827"
 UPSTREAM_CEF_VERSION="146.0.10+g8219561+chromium-146.0.7680.179"
-NATIVE_CEF_VERSION="146.0.15+g566c566+chromium-146.0.7680.179"
-CODEC_REVISION="native-codecs.3"
 RELEASE_TAG="jcef-d3de827+cef-$UPSTREAM_CEF_VERSION"
-PLATFORM="macosx-arm64"
-BASENAME="jcef-natives-$PLATFORM-jcef-$JCEF_COMMIT+cef-$NATIVE_CEF_VERSION+$CODEC_REVISION"
 
 APP_BUNDLE="$BUILD_DIRECTORY/native/Release/jcef_app.app"
 FRAMEWORKS_DIRECTORY="$APP_BUNDLE/Contents/Frameworks"
@@ -47,19 +43,45 @@ if [[ ! -f "$CEF_ROOT/cmake/FindCEF.cmake" || ! -f "$CEF_VERSION_HEADER" ]]; the
   echo "CEF_ROOT is not a CEF binary distribution: $CEF_ROOT" >&2
   exit 1
 fi
-if ! grep -Fqx "#define CEF_VERSION \"$NATIVE_CEF_VERSION\"" "$CEF_VERSION_HEADER"; then
-  echo "CEF_ROOT has an unexpected CEF version: $CEF_ROOT" >&2
-  exit 1
-fi
 if [[ ! -f "$CEF_BUILD_MARKER" ]]; then
   echo "CEF_ROOT is not a Dawn native-codec distribution: $CEF_ROOT" >&2
   exit 1
 fi
+
+# Each Dawn codec revision pins one CEF version (see CMakeLists.txt). native-codecs.5 is the
+# first macOS build.
+if grep -Fqx "codec.revision=native-codecs.5" "$CEF_BUILD_MARKER"; then
+  CODEC_REVISION="native-codecs.5"
+  NATIVE_CEF_VERSION="146.0.29+gb647443+chromium-146.0.7680.179"
+else
+  echo "CEF_ROOT marker names no known Dawn codec revision: $CEF_ROOT" >&2
+  exit 1
+fi
+if ! grep -Fqx "#define CEF_VERSION \"$NATIVE_CEF_VERSION\"" "$CEF_VERSION_HEADER"; then
+  echo "CEF_ROOT has an unexpected CEF version: $CEF_ROOT" >&2
+  exit 1
+fi
+
+# The platform follows the architecture libjcef.dylib was built for.
+if [[ ! -f "$JCEF_LIBRARY" ]]; then
+  echo "Required JCEF runtime path is missing: $JCEF_LIBRARY" >&2
+  exit 1
+fi
+case "$(lipo -archs "$JCEF_LIBRARY")" in
+  arm64) MACHO_ARCH="arm64"; PLATFORM="macosx-arm64" ;;
+  x86_64) MACHO_ARCH="x86_64"; PLATFORM="macosx-amd64" ;;
+  *)
+    echo "libjcef.dylib must be a single arm64 or x86_64 slice: $(lipo -archs "$JCEF_LIBRARY")" >&2
+    exit 1
+    ;;
+esac
+BASENAME="jcef-natives-$PLATFORM-jcef-$JCEF_COMMIT+cef-$NATIVE_CEF_VERSION+$CODEC_REVISION"
 for entry in \
   "codec.revision=$CODEC_REVISION" \
   "cef.source.commit=82195616d8405e6081a0d90924707b82aa9e4141" \
   "chromium.version=146.0.7680.179" \
-  "ffmpeg.branding=Chromium"; do
+  "ffmpeg.branding=Chromium" \
+  "media.use-openh264=false"; do
   if ! grep -Fqx "$entry" "$CEF_BUILD_MARKER"; then
     echo "CEF_ROOT marker is missing '$entry': $CEF_ROOT" >&2
     exit 1
@@ -96,8 +118,8 @@ for binary in \
   "$JCEF_LIBRARY" \
   "$FRAMEWORKS_DIRECTORY/Chromium Embedded Framework.framework/Chromium Embedded Framework" \
   "$FRAMEWORKS_DIRECTORY/jcef Helper.app/Contents/MacOS/jcef Helper"; do
-  if ! lipo -archs "$binary" | tr ' ' '\n' | grep -Fqx arm64; then
-    echo "Required runtime binary is not arm64: $binary" >&2
+  if ! lipo -archs "$binary" | tr ' ' '\n' | grep -Fqx "$MACHO_ARCH"; then
+    echo "Required runtime binary is not $MACHO_ARCH: $binary" >&2
     exit 1
   fi
 done

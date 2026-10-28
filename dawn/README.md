@@ -20,7 +20,11 @@ codec marker before configuration can proceed.
 ```
 
 The script configures a Release x64 build, compiles JCEF, and packages a
-launcher-compatible native runtime jar under `dawn-artifacts`. The pinned
+launcher-compatible native runtime jar under `dawn-artifacts`. It accepts a
+`native-codecs.3` distribution (`146.0.15+g566c566`, the shipping Windows
+runtime) or a `native-codecs.5` one (`146.0.29+gb647443`, without OpenH264,
+whose marker must also say `media.use-openh264=false`); the CEF root's marker
+picks the revision. `native-codecs.4` was never released and is refused. The pinned
 Chromium formatter downloader requires Python 3.11 or older; pass a compatible
 interpreter explicitly when the system default is newer.
 
@@ -41,31 +45,42 @@ To verify the Windows packaging contract without compiling JCEF, run:
 The script uses the tracked fixture under
 `dawn/test-fixtures/windows-packaging/cef-root`, generates placeholder runtime
 files, and verifies that the packaged artifact name and `build_meta.json`
-identify `native-codecs.3`.
+identify `native-codecs.3`. `-CodecRevision native-codecs.5` retargets the
+fixture and checks the revision 5 name and metadata instead.
 
-## macOS arm64
+## macOS
 
 ```bash
 ./dawn/build-macos.sh "$HOME/DawnCEFBuild/.../<distribution>"
+DAWN_MAC_ARCH=x86_64 ./dawn/build-macos.sh "$HOME/DawnCEFBuild/.../<x64 distribution>" jcef_build_x64
 ```
 
 The macOS build requires the full Xcode 26 toolchain selected with
-`xcode-select`.
+`xcode-select`, and `cmake`, `ninja` and `ant` on `PATH`. It needs a
+`native-codecs.5` distribution (`146.0.29+gb647443`), the first Dawn CEF build
+for macOS; its marker must also say `media.use-openh264=false`. The package name and `build_meta.json` platform follow
+the architecture of the built `libjcef.dylib`: `macosx-arm64`, or
+`macosx-amd64` for an x86_64 build cross-compiled on Apple silicon.
+
+The packaged files are unsigned (the arm64 linker adds ad-hoc signatures). The
+launcher's release signs every nested Mach-O and bundle with its Developer ID
+during packaging, as it does for the upstream natives.
 
 ## Runtime contract
 
 The Java classes remain the upstream `146.0.10` classes. Dawn changes only the
 native archive coordinates and pins its SHA-256. The custom native engine is
-`146.0.15+g566c566+chromium-146.0.7680.179`, while the package keeps the
-upstream JCEF compatibility tag:
+`146.0.15+g566c566+chromium-146.0.7680.179` (`native-codecs.3`) or
+`146.0.29+gb647443+chromium-146.0.7680.179` (`native-codecs.5`), while the
+package keeps the upstream JCEF compatibility tag:
 
 ```text
 jcef-d3de827+cef-146.0.10+g8219561+chromium-146.0.7680.179
 ```
 
-Every runtime package includes `build_meta.json` with
-`dawn_codec_revision=native-codecs.3`, and the asset filename also includes the
-codec revision. Keeping the upstream `release_tag` is required because the
+Every runtime package includes `build_meta.json` with its
+`dawn_codec_revision` (`native-codecs.3` for the shipping Windows runtime), and
+the asset filename also includes the codec revision. Keeping the upstream `release_tag` is required because the
 upstream `jcefmaven:146.0.10` Java API verifies it before initializing an
 already-installed native runtime. Dawn also writes its own `install.lock` and
 `dawn-jcef-runtime.properties` markers when assembling the launcher app image.
